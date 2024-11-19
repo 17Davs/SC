@@ -113,7 +113,7 @@ Vagrant.configure("2") do |config|
      # bash /vagrant/setup-monitoring.sh
       sudo reboot
     SHELL
-  end
+  end n
 
   config.vm.define "sql2" do |sql2|
     sql2.vm.box = "ubuntu/focal64"

@@ -12,9 +12,10 @@ sudo systemctl enable corosync pacemaker
 sudo systemctl start corosync
 sudo systemctl start pacemaker
 
-# Configure Corosync cluster configuration file
+# Backup and configure Corosync cluster configuration file
 if [ ! -f "/etc/corosync/corosync.conf" ]; then
     echo "Configuring Corosync..."
+    sudo cp /etc/corosync/corosync.conf /etc/corosync/corosync.conf.bak || true
     sudo tee /etc/corosync/corosync.conf > /dev/null <<EOF
 totem {
     version: 2
