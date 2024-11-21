@@ -58,7 +58,7 @@ if [[ "$(hostname)" == "sql1" ]]; then
     echo "hacluster:hacluster" | sudo chpasswd
 
     # Authenticate with both nodes
-    sudo pcs cluster auth sql1 sql2 -u hacluster -p hacluster --force
+    sudo pcs cluster auth sql1 sql2 -u hacluster -p hacluster 
 
     # Create and start the cluster
     sudo pcs cluster setup --name SQLCluster sql1 sql2

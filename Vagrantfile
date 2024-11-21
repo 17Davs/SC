@@ -16,7 +16,8 @@ Vagrant.configure("2") do |config|
       sudo hostnamectl set-hostname haproxy1
       chmod +x /vagrant/*.sh
       bash /vagrant/first.sh
-      bash /vagrant/setup-haproxy.sh
+      bash /vagrant/ha_proxy.sh
+      bash /vagrant/cluster_web.sh
       sudo reboot
     SHELL
   end
@@ -36,7 +37,8 @@ Vagrant.configure("2") do |config|
     haproxy2.vm.provision "shell", inline: <<-SHELL
       chmod +x /vagrant/*.sh
       bash /vagrant/first.sh
-      bash /vagrant/setup-haproxy.sh
+      bash /vagrant/ha_proxy.sh
+      bash /vagrant/cluster_web.sh
       sudo reboot
     SHELL
   end
@@ -109,7 +111,7 @@ Vagrant.configure("2") do |config|
       bash /vagrant/first.sh
       bash /vagrant/glusterfs.sh
       bash /vagrant/database.sh
-      bash /vagrant/ha_database.sh
+      bash /vagrant/cluster_database.sh
      # bash /vagrant/setup-monitoring.sh
       sudo reboot
     SHELL
@@ -134,7 +136,7 @@ Vagrant.configure("2") do |config|
       bash /vagrant/first.sh
       bash /vagrant/glusterfs.sh
       bash /vagrant/database.sh
-      bash /vagrant/ha_database.sh
+      bash /vagrant/cluster_database.sh
       #bash /vagrant/setup-monitoring.sh
       sudo reboot
     SHELL
