@@ -2,9 +2,6 @@
 
 set -e  # Exit script on any error
 
-# Update packages
-sudo apt-get update
-
 # Install GlusterFS
 echo "Installing GlusterFS..."
 sudo apt-get install -y glusterfs-server glusterfs-client
