@@ -4,9 +4,6 @@ set -e  # Exit script on any error
 
 echo "Installing and configuring MariaDB on $(hostname)..."
 
-# Update package index
-sudo apt-get update
-
 # Install MariaDB server
 sudo apt-get install -y mariadb-server
 

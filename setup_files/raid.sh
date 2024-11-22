@@ -2,16 +2,21 @@
 
 set -e  # Exit on any error
 
+# Check if RAID is already configured
+if grep -q "md0" /proc/mdstat; then
+    echo "RAID1 is already configured and active. Exiting script."
+    exit 0
+fi
+
 # Check if the necessary disks are available
-if [ ! -b /dev/sdb ] || [ ! -b /dev/sdc ]; then
-    echo "Error: Required disks /dev/sdb and /dev/sdc are not available."
+if [ ! -b /dev/sdc ] || [ ! -b /dev/sdd ]; then
+    echo "Error: Required disks /dev/sdc and /dev/sdd are not available."
     exit 1
 fi
 
 # Install mdadm if not already installed
 if ! dpkg -l | grep -qw mdadm; then
     echo "Installing mdadm..."
-    sudo apt-get update
     sudo apt-get install -y mdadm
 fi
 
@@ -22,9 +27,14 @@ if [ -b /dev/md0 ]; then
     sudo mdadm --remove /dev/md0 || true
 fi
 
+# Clean existing RAID metadata on disks
+echo "Cleaning RAID metadata from /dev/sdc and /dev/sdd..."
+sudo mdadm --zero-superblock /dev/sdc
+sudo mdadm --zero-superblock /dev/sdd
+
 # Create the RAID1 array
-echo "Creating RAID1 array with /dev/sdb and /dev/sdc..."
-yes | sudo mdadm --create --verbose /dev/md0 --level=1 --raid-devices=2 /dev/sdb /dev/sdc
+echo "Creating RAID1 array with /dev/sdc and /dev/sdd..."
+yes | sudo mdadm --create --verbose /dev/md0 --level=1 --raid-devices=2 /dev/sdc /dev/sdd --metadata=1.2 --size=max
 
 # Wait for the RAID to initialize
 echo "Waiting for the RAID array to initialize..."

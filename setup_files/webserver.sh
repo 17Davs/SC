@@ -4,9 +4,6 @@ set -e  # Exit script on any error
 
 echo "Installing and configuring Nginx on $(hostname)..."
 
-# Update package index
-sudo apt-get update
-
 # Install Nginx
 sudo apt-get install -y nginx
 

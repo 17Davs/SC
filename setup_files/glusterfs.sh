@@ -2,9 +2,6 @@
 
 set -e  # Exit script on any error
 
-# Update packages
-sudo apt-get update
-
 # Install GlusterFS
 echo "Installing GlusterFS..."
 sudo apt-get install -y glusterfs-server glusterfs-client
@@ -40,7 +37,7 @@ if [[ "$HOSTNAME" == "web1" || "$HOSTNAME" == "web2" ]]; then
         # Create the GlusterFS volume if it does not exist
         if ! sudo gluster volume info storage &>/dev/null; then
             echo "Creating GlusterFS volume (storage)..."
-            sudo gluster volume create storage replica 2 transport tcp web1:/raid1 web2:/raid1
+            sudo gluster volume create storage replica 2 transport tcp web1:/raid1 web2:/raid1 force
         fi
 
         # Start the GlusterFS volume if it is not already started

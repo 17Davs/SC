@@ -47,10 +47,10 @@ Vagrant.configure("2") do |config|
     web1.vm.box = "ubuntu/focal64"
     web1.vm.network "private_network", type: "static", ip: "192.168.51.121"
     web1.vm.hostname = "web1"
-    config.vm.synced_folder "setup_files/", "/vagrant"
+    config.vm.synced_folder "./setup_files/", "/vagrant"
 
-    web1.vm.disk :disk, size: "3GB", name: "sdb"
     web1.vm.disk :disk, size: "3GB", name: "sdc"
+    web1.vm.disk :disk, size: "3GB", name: "sdd"
 
     web1.vm.provider "virtualbox" do |vb|
       vb.customize ["modifyvm", :id, "--groups", "/ClusterSC"]
@@ -62,7 +62,7 @@ Vagrant.configure("2") do |config|
       bash /vagrant/raid.sh
       bash /vagrant/glusterfs.sh
       bash /vagrant/webserver.sh
-    #  bash /vagrant/setup-monitoring.sh
+      #bash /vagrant/setup-monitoring.sh
       sudo reboot
     SHELL
   end
@@ -73,8 +73,8 @@ Vagrant.configure("2") do |config|
     web2.vm.hostname = "web2"
     config.vm.synced_folder "setup_files/", "/vagrant"
 
-    web2.vm.disk :disk, size: "3GB", name: "sdb"
     web2.vm.disk :disk, size: "3GB", name: "sdc"
+    web2.vm.disk :disk, size: "3GB", name: "sdd"
 
     web2.vm.provider "virtualbox" do |vb|
       vb.customize ["modifyvm", :id, "--groups", "/ClusterSC"]
@@ -82,6 +82,8 @@ Vagrant.configure("2") do |config|
 
     web2.vm.provision "shell", inline: <<-SHELL
       chmod +x /vagrant/*.sh
+      echo "192.168.51.121 web1" | sudo tee -a /etc/hosts
+      echo "192.168.51.122 web2" | sudo tee -a /etc/hosts
       bash /vagrant/first.sh
       bash /vagrant/raid.sh
       bash /vagrant/glusterfs.sh
