@@ -4,9 +4,9 @@ set -e  # Exit script on any error
 
 echo "Starting high availability cluster setup on $(hostname)..."
 
-# Install Pacemaker, Corosync, and pcs
-echo "Installing Pacemaker, Corosync, and pcs..."
-sudo apt-get install -y pacemaker corosync pcs
+# Install Pacemaker and Corosync
+echo "Installing Pacemaker and Corosync..."
+sudo apt-get install -y pacemaker corosync sshpass fence-agents
 
 # Enable and start Pacemaker and Corosync services
 echo "Enabling and starting Pacemaker and Corosync..."
@@ -15,92 +15,57 @@ sudo systemctl start corosync
 sudo systemctl start pacemaker
 
 # Configure Corosync (if not already configured)
-if [ ! -f "/etc/corosync/corosync.conf" ]; then
-    echo "Configuring Corosync cluster settings..."
-    sudo tee /etc/corosync/corosync.conf > /dev/null <<EOF
-totem {
-    version: 2
-    secauth: on
-    cluster_name: ProxyCluster
-    transport: udpu
-    interface {
-        ringnumber: 0
-        bindnetaddr: 172.20.51.0  # Adjust to the external network
-        mcastport: 5405
-    }
-}
-nodelist {
-    node {
-        ring0_addr: haproxy1
-        nodeid: 1
-    }
-    node {
-        ring0_addr: haproxy2
-        nodeid: 2
-    }
-}
-quorum {
-    provider: corosync_votequorum
-}
-logging {
-    to_logfile: yes
-    logfile: /var/log/corosync.log
-    to_syslog: yes
-}
-EOF
-    sudo systemctl restart corosync pacemaker
-fi
+echo "Configuring Corosync cluster settings..."
+sudo cp /vagrant/haproxy_corosync.conf /etc/corosync/corosync.conf
+
+sudo systemctl restart corosync pacemaker
+
+# Set the hacluster user password
+echo "Setting password for hacluster user..."
+echo "hacluster:hacluster" | sudo chpasswd
 
 # Additional configuration for haproxy1 (cluster setup)
 if [[ "$(hostname)" == "haproxy1" ]]; then
-    echo "Setting up cluster on haproxy1..."
+    echo "Setting up cluster on haproxy1 using crm..."
+    
+    # Disable STONITH (if not needed)
+    echo "Disabling STONITH..."
+    sudo crm configure property stonith-enabled=false
 
-    # Set the hacluster user password
-    echo "Setting password for hacluster user..."
-    echo "hacluster:hacluster" | sudo chpasswd
+    # Create the cluster
+    sudo crm configure property cluster-name="ProxyCluster"
 
-    # Authenticate with both nodes
-    echo "Authenticating with haproxy1 and haproxy2..."
-    sudo pcs cluster auth haproxy1 haproxy2 -u hacluster -p hacluster --force
+    # Add nodes manually
+    sudo crm configure node haproxy1-internal
+    sudo crm configure node haproxy2-internal
 
-    # Create and start the cluster
-    echo "Creating and starting the cluster..."
-    sudo pcs cluster setup --name ProxyCluster haproxy1 haproxy2
-    sudo pcs cluster start --all
+    # Create resources
+    echo "Creating resources..."
+    sudo crm configure primitive cluster_web_ip ocf:heartbeat:IPaddr2 \
+       params ip=172.20.51.1 cidr_netmask=24 nic=enp0s8 op monitor interval=5s
 
-    # Enable the cluster to start on boot
-    echo "Enabling the cluster to start on boot..."
-    sudo pcs cluster enable --all
-
-    # Create Virtual IP resource
-    echo "Creating Virtual IP resource..."
-    sudo pcs resource create cluster_web_ip ocf:heartbeat:IPaddr2 ip=172.20.51.1 cidr_netmask=24 nic=eth1 op monitor interval=5s
-
-    # Create HAProxy resource
-    echo "Creating HAProxy resource..."
-    sudo pcs resource create haproxy systemd:haproxy op monitor interval=5s
+    sudo crm configure primitive haproxy systemd:haproxy \
+        op monitor interval=5s
 
     # Group resources
     echo "Grouping resources..."
-    sudo pcs resource group add g_proxy cluster_web_ip haproxy
+    sudo crm configure group g_proxy cluster_web_ip haproxy
 
-    # Set location preferences
-    echo "Configuring resource location preferences..."
-    sudo pcs constraint location g_proxy prefers haproxy1=100
-    sudo pcs constraint location g_proxy prefers haproxy2=50
+    # Set resource constraints
+    echo "Configuring resource constraints..."
+    sudo crm configure location loc_haproxy1 g_proxy 100: haproxy1-internal
+    sudo crm configure location loc_haproxy2 g_proxy 50: haproxy2-internal
+    sudo crm configure colocation col_proxy inf: haproxy cluster_web_ip
 
-    # Configure colocation constraints
-    echo "Configuring colocation for HAProxy and Virtual IP..."
-    sudo pcs constraint colocation add haproxy with cluster_web_ip INFINITY
+  
 
-    # Prevent automatic migration
-    echo "Setting migration-threshold to 0..."
-    sudo pcs resource update haproxy meta migration-threshold=0
-    sudo pcs resource update cluster_web_ip meta migration-threshold=0
+    # If you want to use STONITH, uncomment the following lines:
+    # sudo crm configure primitive stonith-sbd stonith:sbd op monitor interval=60s
+    # sudo crm configure property stonith-enabled=true
 
     # Verify cluster status
     echo "Cluster setup complete. Verifying status..."
-    sudo pcs status
+    sudo crm status
 fi
 
 echo "High availability cluster setup completed on $(hostname)."

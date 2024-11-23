@@ -1,48 +1,5 @@
 Vagrant.configure("2") do |config|
   
-  config.vm.define "haproxy1" do |haproxy1|
-    haproxy1.vm.box = "ubuntu/focal64"
-    haproxy1.vm.network "private_network", type: "static", ip: "172.20.51.200"
-    haproxy1.vm.network "private_network", type: "static", ip: "192.168.51.100"
-    haproxy1.vm.hostname = "haproxy1"
-    config.vm.synced_folder "setup_files/", "/vagrant"
-
-    haproxy1.vm.provider "virtualbox" do |vb|
-      vb.customize ["modifyvm", :id, "--groups", "/ClusterSC"]
-      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
-    end
-
-    haproxy1.vm.provision "shell", inline: <<-SHELL
-      sudo hostnamectl set-hostname haproxy1
-      chmod +x /vagrant/*.sh
-      bash /vagrant/first.sh
-      bash /vagrant/ha_proxy.sh
-      bash /vagrant/cluster_web.sh
-      sudo reboot
-    SHELL
-  end
-
-  config.vm.define "haproxy2" do |haproxy2|
-    haproxy2.vm.box = "ubuntu/focal64"
-    haproxy2.vm.network "private_network", type: "static", ip: "172.20.51.201"
-    haproxy2.vm.network "private_network", type: "static", ip: "192.168.51.101"
-    haproxy2.vm.hostname = "haproxy2"
-    config.vm.synced_folder "setup_files/", "/vagrant"
-
-    haproxy2.vm.provider "virtualbox" do |vb|
-      vb.customize ["modifyvm", :id, "--groups", "/ClusterSC"]
-      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
-    end
-
-    haproxy2.vm.provision "shell", inline: <<-SHELL
-      chmod +x /vagrant/*.sh
-      bash /vagrant/first.sh
-      bash /vagrant/ha_proxy.sh
-      bash /vagrant/cluster_web.sh
-      sudo reboot
-    SHELL
-  end
-
   config.vm.define "web1" do |web1|
     web1.vm.box = "ubuntu/focal64"
     web1.vm.network "private_network", type: "static", ip: "192.168.51.121"
@@ -59,6 +16,7 @@ Vagrant.configure("2") do |config|
     web1.vm.provision "shell", inline: <<-SHELL
       chmod +x /vagrant/*.sh
       bash /vagrant/first.sh
+      bash /vagrant/hosts.sh
       bash /vagrant/raid.sh
       bash /vagrant/glusterfs.sh
       bash /vagrant/webserver.sh
@@ -93,7 +51,51 @@ Vagrant.configure("2") do |config|
     SHELL
   end
 
-    
+  config.vm.define "haproxy1" do |haproxy1|
+    haproxy1.vm.box = "ubuntu/focal64"
+    haproxy1.vm.network "private_network", type: "static", ip: "172.20.51.200"
+    haproxy1.vm.network "private_network", type: "static", ip: "192.168.51.100"
+    haproxy1.vm.hostname = "haproxy1"
+    config.vm.synced_folder "setup_files/", "/vagrant"
+
+    haproxy1.vm.provider "virtualbox" do |vb|
+      vb.customize ["modifyvm", :id, "--groups", "/ClusterSC"]
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+    end
+
+    haproxy1.vm.provision "shell", inline: <<-SHELL
+      sudo hostnamectl set-hostname haproxy1
+      chmod +x /vagrant/*.sh
+      bash /vagrant/first.sh
+      bash /vagrant/hosts.sh
+      bash /vagrant/ha_proxy.sh
+      bash /vagrant/cluster_web.sh
+      sudo reboot
+    SHELL
+  end
+
+  config.vm.define "haproxy2" do |haproxy2|
+    haproxy2.vm.box = "ubuntu/focal64"
+    haproxy2.vm.network "private_network", type: "static", ip: "172.20.51.201"
+    haproxy2.vm.network "private_network", type: "static", ip: "192.168.51.101"
+    haproxy2.vm.hostname = "haproxy2"
+    config.vm.synced_folder "setup_files/", "/vagrant"
+
+    haproxy2.vm.provider "virtualbox" do |vb|
+      vb.customize ["modifyvm", :id, "--groups", "/ClusterSC"]
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+    end
+
+    haproxy2.vm.provision "shell", inline: <<-SHELL
+      chmod +x /vagrant/*.sh
+      bash /vagrant/first.sh
+      bash /vagrant/hosts.sh
+      bash /vagrant/ha_proxy.sh
+      bash /vagrant/cluster_web.sh
+      sudo reboot
+    SHELL
+  end   
+
   config.vm.define "sql1" do |sql1|
     sql1.vm.box = "ubuntu/focal64"
     sql1.vm.network "private_network", type: "static", ip: "192.168.51.111"
@@ -111,6 +113,7 @@ Vagrant.configure("2") do |config|
     sql1.vm.provision "shell", inline: <<-SHELL
       chmod +x /vagrant/*.sh
       bash /vagrant/first.sh
+      bash /vagrant/hosts.sh
       bash /vagrant/glusterfs.sh
       bash /vagrant/database.sh
       bash /vagrant/cluster_database.sh
@@ -136,6 +139,7 @@ Vagrant.configure("2") do |config|
     sql2.vm.provision "shell", inline: <<-SHELL
       chmod +x /vagrant/*.sh
       bash /vagrant/first.sh
+      bash /vagrant/hosts.sh
       bash /vagrant/glusterfs.sh
       bash /vagrant/database.sh
       bash /vagrant/cluster_database.sh
