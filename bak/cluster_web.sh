@@ -44,8 +44,7 @@ if [[ "$(hostname)" == "haproxy1" ]]; then
     sudo crm configure primitive cluster_web_ip ocf:heartbeat:IPaddr2 \
        params ip=172.20.51.1 cidr_netmask=24 nic=enp0s8 op monitor interval=5s
 
-    sudo crm configure primitive haproxy systemd:haproxy \
-        op monitor interval=5s
+    sudo crm configure primitive haproxy systemd:haproxy op monitor interval=5s
 
     # Group resources
     echo "Grouping resources..."

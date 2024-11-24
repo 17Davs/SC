@@ -69,7 +69,7 @@ Vagrant.configure("2") do |config|
       bash /vagrant/first.sh
       bash /vagrant/hosts.sh
       bash /vagrant/ha_proxy.sh
-      bash /vagrant/cluster_web.sh
+      bash /vagrant/cluster_proxy.sh
       sudo reboot
     SHELL
   end
@@ -91,7 +91,7 @@ Vagrant.configure("2") do |config|
       bash /vagrant/first.sh
       bash /vagrant/hosts.sh
       bash /vagrant/ha_proxy.sh
-      bash /vagrant/cluster_web.sh
+      bash /vagrant/cluster_proxy.sh
       sudo reboot
     SHELL
   end   

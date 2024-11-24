@@ -1,0 +1,34 @@
+In case of 
+"    haproxy1: Cluster setup complete. Verifying status...
+    haproxy1: Cluster Summary:
+    haproxy1:   * Stack: corosync
+    haproxy1:   * Current DC: haproxy2 (version 2.0.3-4b1f869f0f) - partition with quorum
+    haproxy1:   * Last updated: Sun Nov 24 19:51:24 2024
+    haproxy1:   * Last change:  Sun Nov 24 19:51:24 2024 by root via cibadmin on haproxy1
+    haproxy1:   * 2 nodes configured
+    haproxy1:   * 2 resource instances configured
+    haproxy1:
+    haproxy1: Node List:
+    haproxy1:   * Online: [ haproxy1 haproxy2 ]
+    haproxy1:
+    haproxy1: Full List of Resources:
+    haproxy1:   * cluster_web_ip        (ocf::heartbeat:IPaddr2):        Started haproxy1
+    haproxy1:   * haproxy       (systemd:haproxy):       FAILED haproxy2
+    haproxy1:
+    haproxy1: Failed Resource Actions:
+    haproxy1:   * haproxy_start_0 on haproxy2 'error' (1): call=10, status='complete', exitreason='', last-rc-change='2024-11-24 19:51:22Z', queued=0ms, exec=2504ms
+    haproxy1:
+    haproxy1: High availability cluster setup completed on haproxy1.
+"
+
+In haproxy2 machine:
+    - sudo vim /etc/haproxy/haproxy.cfg and change bind address to 0.0.0.0:80
+    - sudo systemctl restart haproxy.service
+    - sudo systemctl restart pacemaker
+
+And then: 
+    - sudo crm status
+It should not appear the following message anymore:
+    "Failed Resource Actions:
+    * haproxy_start_0 on haproxy2 'error' (1): call=10, status='complete', exitreason='', last-rc-change='2024-11-24 19:51:22Z', queued=0ms, exec=2504ms
+    "
