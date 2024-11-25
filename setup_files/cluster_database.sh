@@ -40,11 +40,9 @@ if [[ "$(hostname)" == "sql1" ]]; then
         op monitor interval=5s
 
     # MariaDB resource 
-    sudo crm configure primitive mariadb ocf:heartbeat:mysqld \
-        params config=/etc/mysql/my.cnf pid="/var/run/mysqld/mysqld.pid" socket="/var/run/mysqld/mysqld.sock" \
-        op monitor interval=5s timeout=10s \
-        op start timeout=30s interval=0 \
-        op stop timeout=30s interval=0
+    sudo crm configure primitive mariadb ocf:heartbeat:mysql \
+        params config="/etc/mysql/mariadb.conf.d/50-server.cnf" datadir="/cluster/sql" \
+        user="mysql" op monitor interval=15s timeout=30s
 
     # Add colocation: MariaDB depends on VIP
     sudo crm configure colocation mariadb_with_vip inf: mariadb cluster_db_ip

@@ -46,6 +46,27 @@ if [[ "$HOSTNAME" == "web1" || "$HOSTNAME" == "web2" ]]; then
             sudo gluster volume start storage
         fi
     fi
+    
+    echo "Configuring GlusterFS client for web directory on $HOSTNAME..."
+
+    # Create the mount point
+    if [ ! -d "/cluster/www" ]; then
+        echo "Creating /cluster/www directory for mount point..."
+        sudo mkdir -p /cluster/www
+    fi
+    
+    # Ensure the mount persists across reboots
+    if ! grep -q "web1:/storage /cluster/www glusterfs" /etc/fstab; then
+        echo "Adding mount to /etc/fstab..."
+        echo "web1:/storage /cluster/www glusterfs defaults,_netdev 0 0" | sudo tee -a /etc/fstab
+    fi    
+
+    # Mount the GlusterFS volume
+    if ! mount | grep -q "/cluster/www"; then
+        echo "Mounting the GlusterFS volume at /cluster/www..."
+        sudo mount -t glusterfs web1:/storage /cluster/www
+    fi
+
 fi
 
 # Configuration for SQL clients (sql1 and sql2)
@@ -68,29 +89,6 @@ if [[ "$HOSTNAME" == "sql1" || "$HOSTNAME" == "sql2" ]]; then
     if ! grep -q "web1:/storage /cluster/sql glusterfs" /etc/fstab; then
         echo "Adding mount to /etc/fstab..."
         echo "web1:/storage /cluster/sql glusterfs defaults,_netdev 0 0" | sudo tee -a /etc/fstab
-    fi
-fi
-
-# Configuration for Web clients (web1 and web2 mount /cluster/www)
-if [[ "$HOSTNAME" == "web1" || "$HOSTNAME" == "web2" ]]; then
-    echo "Configuring GlusterFS client for web directory on $HOSTNAME..."
-
-    # Create the mount point
-    if [ ! -d "/cluster/www" ]; then
-        echo "Creating /cluster/www directory for mount point..."
-        sudo mkdir -p /cluster/www
-    fi
-
-    # Mount the GlusterFS volume
-    if ! mount | grep -q "/cluster/www"; then
-        echo "Mounting the GlusterFS volume at /cluster/www..."
-        sudo mount -t glusterfs web1:/storage /cluster/www
-    fi
-
-    # Ensure the mount persists across reboots
-    if ! grep -q "web1:/storage /cluster/www glusterfs" /etc/fstab; then
-        echo "Adding mount to /etc/fstab..."
-        echo "web1:/storage /cluster/www glusterfs defaults,_netdev 0 0" | sudo tee -a /etc/fstab
     fi
 fi
 

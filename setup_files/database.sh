@@ -19,10 +19,17 @@ fi
 # Move MariaDB data directory to /cluster/sql
 if [ -d "/var/lib/mysql" ]; then
     echo "Relocating MariaDB data directory to /cluster/sql..."
-    sudo mv /var/lib/mysql/* /cluster/sql/
-    sudo rm -rf /var/lib/mysql
+    if [ "$(ls -A /cluster/sql)" ]; then
+        echo "/cluster/sql already populated. Skipping data migration."
+    else
+        # Migrate data if the directory is empty
+        sudo mv /var/lib/mysql/* /cluster/sql/
+    fi
+    # Remove old directory and create symbolic link
+    sudo rm -rf /var/lib/mysql || true  # Avoid stopping the script if the directory does not exist
     sudo ln -s /cluster/sql /var/lib/mysql
     sudo chown -R mysql:mysql /cluster/sql
+    sudo chmod -R 755 /cluster/sql
 fi
 
 # Configure MariaDB to use /cluster/sql as the data directory

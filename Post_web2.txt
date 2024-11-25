@@ -1,0 +1,3 @@
+After using Vagrant up web2 web1
+
+- vagrant halt web2

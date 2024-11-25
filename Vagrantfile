@@ -40,8 +40,6 @@ Vagrant.configure("2") do |config|
 
     web2.vm.provision "shell", inline: <<-SHELL
       chmod +x /vagrant/*.sh
-      echo "192.168.51.121 web1" | sudo tee -a /etc/hosts
-      echo "192.168.51.122 web2" | sudo tee -a /etc/hosts
       bash /vagrant/first.sh
       bash /vagrant/raid.sh
       bash /vagrant/glusterfs.sh
@@ -102,9 +100,6 @@ Vagrant.configure("2") do |config|
     sql1.vm.hostname = "sql1"
     config.vm.synced_folder "setup_files/", "/vagrant"
 
-    sql1.vm.disk :disk, size: "3GB", name: "sdb"
-    sql1.vm.disk :disk, size: "3GB", name: "sdc"
-
     sql1.vm.provider "virtualbox" do |vb|
       vb.customize ["modifyvm", :id, "--groups", "/ClusterSC"]
       vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
@@ -127,9 +122,6 @@ Vagrant.configure("2") do |config|
     sql2.vm.network "private_network", type: "static", ip: "192.168.51.112"
     sql2.vm.hostname = "sql2"
     config.vm.synced_folder "setup_files/", "/vagrant"
-
-    sql2.vm.disk :disk, size: "3GB", name: "sdb"
-    sql2.vm.disk :disk, size: "3GB", name: "sdc"
 
     sql2.vm.provider "virtualbox" do |vb|
       vb.customize ["modifyvm", :id, "--groups", "/ClusterSC"]
