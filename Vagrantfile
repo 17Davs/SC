@@ -41,6 +41,7 @@ Vagrant.configure("2") do |config|
     web2.vm.provision "shell", inline: <<-SHELL
       chmod +x /vagrant/*.sh
       bash /vagrant/first.sh
+      bash /vagrant/hosts.sh
       bash /vagrant/raid.sh
       bash /vagrant/glusterfs.sh
       bash /vagrant/webserver.sh

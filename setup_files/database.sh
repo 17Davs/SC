@@ -45,20 +45,7 @@ if ! grep -q "bind-address = 192.168.51.110" /etc/mysql/mariadb.conf.d/50-server
 fi
 
 # Restart MariaDB to apply changes
-sudo systemctl start mariadb
 sudo systemctl enable mariadb
+sudo systemctl start mariadb
 
-# Secure the MariaDB installation
-echo "Securing MariaDB installation..."
-sudo mysql_secure_installation <<EOF
 
-Y
-rootpassword
-rootpassword
-Y
-Y
-Y
-Y
-EOF
-
-echo "MariaDB installation and configuration completed on $(hostname)."

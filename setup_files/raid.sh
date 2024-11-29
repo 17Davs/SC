@@ -44,10 +44,14 @@ sudo mdadm --wait /dev/md0
 echo "Formatting the RAID array with ext4 filesystem..."
 sudo mkfs.ext4 /dev/md0
 
-# Create the mount point
-if [ ! -d /raid1 ]; then
-    echo "Creating mount point /raid1..."
-    sudo mkdir -p /raid1
+# Create directories for GlusterFS
+if [ ! -d /raid1/www ]; then
+    echo "Creating /raid1/www directory..."
+    sudo mkdir -p /raid1/www
+fi
+if [ ! -d /raid1/sql ]; then
+    echo "Creating /raid1/sql directory..."
+    sudo mkdir -p /raid1/sql
 fi
 
 # Mount the RAID array

@@ -26,69 +26,63 @@ if [[ "$HOSTNAME" == "web1" || "$HOSTNAME" == "web2" ]]; then
     # Ensure correct permissions for /raid1
     sudo chown -R $(whoami):$(whoami) /raid1
 
-    # Configuration on web2 (manages peer addition and volume creation)
-    if [[ "$HOSTNAME" == "web2" ]]; then
-        echo "Setting up GlusterFS on web2 (primary configuration node)..."
+    # Configuration on web1 (primary configuration node)
+    if [[ "$HOSTNAME" == "web1" ]]; then
+        echo "Setting up GlusterFS on web1 (primary configuration node)..."
 
-        # Add web1 as a peer
-        echo "Adding web1 as a peer..."
-        sudo gluster peer probe web1 || echo "web1 is already added as a peer."
+        # Add web2 as a peer
+        echo "Adding web2 as a peer..."
+        sudo gluster peer probe web2 || echo "web2 is already added as a peer."
 
-        # Create the GlusterFS volume if it does not exist
-        if ! sudo gluster volume info storage &>/dev/null; then
-            echo "Creating GlusterFS volume (storage)..."
-            sudo gluster volume create storage replica 2 transport tcp web1:/raid1 web2:/raid1 force
+        # Create the GlusterFS volumes if they do not exist
+        if ! sudo gluster volume info storage-www &>/dev/null; then
+            echo "Creating GlusterFS volume (storage-www)..."
+            sudo gluster volume create storage-www replica 2 transport tcp web1:/raid1/www web2:/raid1/www force
+            sudo gluster volume start storage-www
         fi
 
-        # Start the GlusterFS volume if it is not already started
-        if ! sudo gluster volume status storage &>/dev/null; then
-            echo "Starting the GlusterFS volume..."
-            sudo gluster volume start storage
+        if ! sudo gluster volume info storage-sql &>/dev/null; then
+            echo "Creating GlusterFS volume (storage-sql)..."
+            sudo gluster volume create storage-sql replica 2 transport tcp web1:/raid1/sql web2:/raid1/sql force
+            sudo gluster volume start storage-sql
         fi
     fi
-    
-    echo "Configuring GlusterFS client for web directory on $HOSTNAME..."
 
-    # Create the mount point
+    # Mount the GlusterFS volume for web directory (on web1 and web2)
     if [ ! -d "/cluster/www" ]; then
         echo "Creating /cluster/www directory for mount point..."
         sudo mkdir -p /cluster/www
     fi
-    
-    # Ensure the mount persists across reboots
-    if ! grep -q "web1:/storage /cluster/www glusterfs" /etc/fstab; then
-        echo "Adding mount to /etc/fstab..."
-        echo "web1:/storage /cluster/www glusterfs defaults,_netdev 0 0" | sudo tee -a /etc/fstab
-    fi    
 
-    # Mount the GlusterFS volume
-    if ! mount | grep -q "/cluster/www"; then
-        echo "Mounting the GlusterFS volume at /cluster/www..."
-        sudo mount -t glusterfs web1:/storage /cluster/www
+    if ! grep -q "web1:/storage-www /cluster/www glusterfs" /etc/fstab; then
+        echo "Adding mount for /cluster/www to /etc/fstab..."
+        echo "web1:/storage-www /cluster/www glusterfs defaults,_netdev 0 0" | sudo tee -a /etc/fstab
     fi
 
+    if ! mount | grep -q "/cluster/www"; then
+        echo "Mounting the GlusterFS volume at /cluster/www..."
+        sudo mount -t glusterfs web1:/storage-www /cluster/www
+    fi
 fi
 
-# Configuration for SQL clients (sql1 and sql2)
+# Configuration for SQL nodes (sql1 and sql2)
 if [[ "$HOSTNAME" == "sql1" || "$HOSTNAME" == "sql2" ]]; then
     echo "Configuring GlusterFS client on SQL node ($HOSTNAME)..."
 
-    # Create the mount point
+    # Mount the GlusterFS volume for SQL directory
     if [ ! -d "/cluster/sql" ]; then
         echo "Creating /cluster/sql directory for mount point..."
         sudo mkdir -p /cluster/sql
     fi
 
-    # Mount the GlusterFS volume
-    if ! mount | grep -q "/cluster/sql"; then
-        echo "Mounting the GlusterFS volume at /cluster/sql..."
-        sudo mount -t glusterfs web1:/storage /cluster/sql
+    if ! grep -q "web1:/storage-sql /cluster/sql glusterfs" /etc/fstab; then
+        echo "Adding mount for /cluster/sql to /etc/fstab..."
+        echo "web1:/storage-sql /cluster/sql glusterfs defaults,_netdev 0 0" | sudo tee -a /etc/fstab
     fi
 
-    # Ensure the mount persists across reboots
-    if ! grep -q "web1:/storage /cluster/sql glusterfs" /etc/fstab; then
-        echo "Adding mount to /etc/fstab..."
-        echo "web1:/storage /cluster/sql glusterfs defaults,_netdev 0 0" | sudo tee -a /etc/fstab
+    if ! mount | grep -q "/cluster/sql"; then
+        echo "Mounting the GlusterFS volume at /cluster/sql..."
+        sudo mount -t glusterfs web1:/storage-sql /cluster/sql
     fi
 fi
 

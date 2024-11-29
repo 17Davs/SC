@@ -24,7 +24,7 @@ sudo cp $NGINX_CONF ${NGINX_CONF}.bak  # Backup the original configuration
 sudo tee $NGINX_CONF > /dev/null <<EOF
 server {
     listen 80;
-    server_name _;
+    server_name default;
 
     root /cluster/www;
     index index.html index.htm;
@@ -44,10 +44,10 @@ if [ ! -f "/cluster/www/index.html" ]; then
     echo "<!DOCTYPE html>
 <html>
 <head>
-    <title>Welcome to Nginx on $(hostname)</title>
+    <title>Welcome to Nginx on SC Cluster</title>
 </head>
 <body>
-    <h1>Welcome to $(hostname)!</h1>
+    <h1>Welcome to SC Cluster!</h1>
     <p>This is served from /cluster/www.</p>
 </body>
 </html>" | sudo tee /cluster/www/index.html > /dev/null
