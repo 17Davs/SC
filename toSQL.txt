@@ -1,0 +1,87 @@
+Aqui está o script atualizado, separando as configurações relacionadas ao banco de dados para que você possa aplicá-las manualmente no servidor remoto:
+
+---
+
+### **Script Bash para Configuração do Servidor Local (PHP e Apache)**
+
+```bash
+#!/bin/bash
+
+# Atualizar pacotes e repositórios
+echo "Atualizando pacotes e repositórios..."
+sudo apt update && sudo apt upgrade -y
+
+# Instalar as extensões PHP necessárias
+echo "Instalando extensões PHP necessárias..."
+sudo apt install -y php7.4-snmp php7.4-xml php7.4-mbstring php7.4-mysqli php7.4-pdo php7.4-pdo-mysql php7.4-sockets php7.4-ldap
+
+# Configurar o timezone no PHP
+echo "Configurando o timezone no PHP..."
+PHP_INI_APACHE="/etc/php/7.4/apache2/php.ini"
+PHP_INI_CLI="/etc/php/7.4/cli/php.ini"
+
+for PHP_INI in $PHP_INI_APACHE $PHP_INI_CLI; do
+    sudo sed -i "s|^;date.timezone =.*|date.timezone = Europe/Lisbon|g" $PHP_INI
+    sudo sed -i "s|^max_execution_time =.*|max_execution_time = 300|g" $PHP_INI
+done
+
+# Reiniciar serviços PHP e Apache
+echo "Reiniciando serviços PHP e Apache..."
+sudo systemctl restart php7.4-fpm
+sudo systemctl restart apache2
+
+# Verificar instalação das extensões PHP
+echo "Verificando módulos PHP instalados..."
+php -m | grep -E "snmp|xml|mbstring|mysqli|pdo|pdo_mysql|sockets|ldap"
+
+# Concluir instalação
+echo "Configurações do servidor local concluídas! Configure o banco de dados remotamente para finalizar."
+```
+
+---
+
+### **Configurações Manuais no Servidor de Banco de Dados Remoto**
+
+No servidor remoto onde o banco de dados está configurado, você pode executar os comandos abaixo manualmente ou adaptá-los para um script.
+
+#### **1. Suporte a Timezone no MySQL**
+Carregar informações de timezone no banco de dados:
+
+```bash
+sudo mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u root -p mysql
+```
+
+#### **2. Ajustar Configurações no `my.cnf`**
+Edite o arquivo de configuração do MySQL no servidor remoto:
+
+```bash
+sudo nano /etc/mysql/my.cnf
+```
+
+Adicione as seguintes configurações dentro da seção `[mysqld]`:
+
+```ini
+max_allowed_packet = 16M
+innodb_file_per_table = 1
+innodb_buffer_pool_size = 128M
+innodb_flush_log_at_trx_commit = 2
+```
+
+Reinicie o MySQL no servidor remoto:
+
+```bash
+sudo systemctl restart mysql
+```
+
+---
+
+### **Como Usar**
+1. Salve o primeiro script (`setup_cacti_local.sh`) no servidor local e execute:
+   ```bash
+   chmod +x setup_cacti_local.sh
+   sudo ./setup_cacti_local.sh
+   ```
+
+2. Para as configurações do MySQL, conecte-se ao servidor remoto e aplique os comandos mencionados manualmente.
+
+Se precisar de algo mais, é só avisar! 😊
