@@ -22,12 +22,13 @@ echo "Configuring database on the SQL cluster ..."
 # Check if the database already exists
 DB_EXISTS=$(mysql -h $DB_HOST -u root -p$DB_ROOT_PASS -e "SHOW DATABASES LIKE '$DB_NAME';")
 if [ -z "$DB_EXISTS" ]; then
-    mysql -h $DB_HOST -u root -p$DB_ROOT_PASS -e "CREATE DATABASE $DB_NAME;"
-    mysql -h $DB_HOST -u root -p$DB_ROOT_PASS -e "CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_PASS';"
-    mysql -h $DB_HOST -u root -p$DB_ROOT_PASS -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';"
-    mysql -h $DB_HOST -u root -p$DB_ROOT_PASS -e "FLUSH PRIVILEGES;"
+  echo "Database $DB_NAME does not exist. Creating..."
+  mysql -h $DB_HOST -u root -p$DB_ROOT_PASS -e "CREATE DATABASE $DB_NAME;"
+  mysql -h $DB_HOST -u root -p$DB_ROOT_PASS -e "CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_PASS';"
+  mysql -h $DB_HOST -u root -p$DB_ROOT_PASS -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';"
+  mysql -h $DB_HOST -u root -p$DB_ROOT_PASS -e "FLUSH PRIVILEGES;"
 else
-    echo "Database $DB_NAME already exists. Skipping creation."
+  echo "Database $DB_NAME already exists. Skipping creation."
 fi
 
 # Download and configure Cacti (only on web1)
@@ -66,18 +67,16 @@ sudo chmod -R 775 /cluster/www/cacti
 echo "Configuring cron job for Cacti..."
 echo "*/5 * * * * www-data php /cluster/www/cacti/poller.php > /dev/null 2>&1" | sudo tee -a /etc/crontab
 
-# Configuring Nginx to serve Cacti
+# Configuring Nginx to serve Cacti and others
 echo "Copying Nginx configuration for Cacti..."
-sudo cp /vagrant/conf/nginx_cacti.cfg /etc/nginx/sites-available/cacti
+sudo cp /vagrant/conf/nginx_default.cfg /etc/nginx/sites-available/default
 
 # Activating the Cacti site in Nginx
 echo "Activating Cacti site in Nginx..."
-if [ ! -L /etc/nginx/sites-enabled/cacti ]; then
-  sudo ln -s /etc/nginx/sites-available/cacti /etc/nginx/sites-enabled/
-  sudo systemctl restart nginx
-else
-  echo "Cacti site already activated. Skipping activation."
+if [ ! -L /etc/nginx/sites-enabled/default ]; then
+  sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/ 
 fi
+sudo systemctl restart nginx
 
 # Final message
 echo "Cacti setup complete! Access: http://172.20.51.1/cacti to complete the installation."

@@ -46,7 +46,7 @@ if [ "$(hostname)" = "web1" ]; then
 
     # Configure Cacti database settings
     echo "Configuring Cacti database connection..."
-    if [ -f "$Cacti_DIR/include/config.php.dist" ]; then
+    if [ ! -f "include/config.php" ] && [ -f "include/config.php.dist" ]; then
         sudo cp include/config.php.dist include/config.php
     fi
 
@@ -58,15 +58,13 @@ if [ "$(hostname)" = "web1" ]; then
     TABLE_COUNT=$(mysql -h $DB_HOST -u $DB_USER -p$DB_USER_PASS -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$DB_NAME';" | tail -n 1)
     if [ "$TABLE_COUNT" -eq "0" ]; then
         echo "Importing initial Cacti data into the database..."
-        if [ -f "$Cacti_DIR/cacti.sql" ]; then
+        if [ -f "cacti.sql" ]; then
             sudo mysql -h $DB_HOST -u $DB_USER -p$DB_USER_PASS $DB_NAME < cacti.sql
         else
             echo "Error: cacti.sql not found in $Cacti_DIR. Cannot initialize database."
             exit 1
         fi
 
-        echo "Upgrading Cacti database..."
-        sudo php cli/upgrade_database.php --forcever
     else
         echo "Cacti database already initialized. Skipping import and setup."
     fi
@@ -77,24 +75,28 @@ fi
 # Set correct permissions
 echo "Setting permissions for Cacti files..."
 sudo chown -R www-data:www-data $Cacti_DIR
-sudo chmod -R 777 $Cacti_DIR
+sudo chmod -R 755 $Cacti_DIR
 
 # Configure Cron Job for Cacti
 echo "Configuring cron job for Cacti..."
-echo "*/5 * * * * www-data php /cluster/www/cacti/poller.php > /dev/null 2>&1" | sudo tee -a /etc/crontab
+CRON_JOB="*/5 * * * * www-data php /cluster/www/cacti/poller.php > /dev/null 2>&1"
+CRON_FILE="/etc/crontab"
+
+if ! grep -Fxq "$CRON_JOB" $CRON_FILE; then
+    echo "$CRON_JOB" | sudo tee -a $CRON_FILE
+else
+    echo "Cron job already exists in $CRON_FILE. Skipping addition."
+fi
 
 # Configure Nginx to serve Cacti
 echo "Copying Nginx configuration for Cacti..."
-sudo cp /vagrant/conf/nginx_cacti.cfg /etc/nginx/sites-available/cacti
+sudo cp /vagrant/conf/nginx_default.cfg /etc/nginx/sites-available/default
 
 # Activating the Cacti site in Nginx
 echo "Activating Cacti site in Nginx..."
-if [ ! -L /etc/nginx/sites-enabled/cacti ]; then
-    sudo ln -s /etc/nginx/sites-available/cacti /etc/nginx/sites-enabled/
-    sudo systemctl restart nginx
-else
-    echo "Cacti site already activated. Skipping activation."
+if [ ! -L /etc/nginx/sites-enabled/default ]; then
+    sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
 fi
-
+sudo systemctl restart nginx
 # Final message
 echo "Cacti setup complete! Access: http://172.20.51.1/cacti to complete the installation."
