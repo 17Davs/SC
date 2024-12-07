@@ -20,7 +20,6 @@ Vagrant.configure("2") do |config|
       bash /vagrant/raid.sh
       bash /vagrant/glusterfs.sh
       bash /vagrant/webserver.sh
-      #bash /vagrant/setup-monitoring.sh
       sudo reboot
     SHELL
   end
@@ -45,7 +44,6 @@ Vagrant.configure("2") do |config|
       bash /vagrant/raid.sh
       bash /vagrant/glusterfs.sh
       bash /vagrant/webserver.sh
-      #bash /vagrant/setup-monitoring.sh
       sudo reboot
     SHELL
   end
@@ -113,7 +111,6 @@ Vagrant.configure("2") do |config|
       bash /vagrant/glusterfs.sh
       bash /vagrant/database.sh
       bash /vagrant/cluster_database.sh
-     # bash /vagrant/setup-monitoring.sh
       sudo reboot
     SHELL
   end
@@ -136,7 +133,23 @@ Vagrant.configure("2") do |config|
       bash /vagrant/glusterfs.sh
       bash /vagrant/database.sh
       bash /vagrant/cluster_database.sh
-      #bash /vagrant/setup-monitoring.sh
+      sudo reboot
+    SHELL
+  end
+
+  config.vm.define "client" do |client|
+    client.vm.box = "ubuntu/focal64"
+    client.vm.network "private_network", type: "static", ip: "192.168.51.10"
+    client.vm.hostname = "client"
+    config.vm.synced_folder "setup_files/", "/vagrant"
+
+    client.vm.provider "virtualbox" do |vb|
+      vb.customize ["modifyvm", :id, "--groups", "/ClusterSC"]
+    end
+
+    client.vm.provision "shell", inline: <<-SHELL
+      sudo apt-get update
+      sudo apt-get install -y ubuntu-desktop
       sudo reboot
     SHELL
   end
