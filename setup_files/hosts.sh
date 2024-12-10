@@ -12,7 +12,6 @@ haproxy1_external="172.20.51.200 haproxy1-external"
 haproxy2_internal="192.168.51.101 haproxy2-internal"
 haproxy2_external="172.20.51.201 haproxy2-external"
 
-cluster_sql="192.168.51.110 cluster-sql"
 
 # Function to check and add entry to /etc/hosts
 add_to_hosts() {

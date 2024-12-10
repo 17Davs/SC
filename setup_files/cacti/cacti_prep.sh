@@ -46,19 +46,15 @@ if [ "$(hostname)" = "web1" ]; then
 
     # Configure Cacti database settings
     echo "Configuring Cacti database connection..."
-    if [ ! -f "include/config.php" ] && [ -f "include/config.php.dist" ]; then
-        sudo cp include/config.php.dist include/config.php
-    fi
 
-    sudo sed -i "s/\$database_hostname = '.*';/\$database_hostname = '$DB_HOST';/g" include/config.php
-    sudo sed -i "s/\$database_username = '.*';/\$database_username = '$DB_USER';/g" include/config.php
-    sudo sed -i "s/\$database_password = '.*';/\$database_password = '$DB_USER_PASS';/g" include/config.php
+    sudo cp /vagrant/cacti/config.php include/config.php
 
     # Check if database is already initialized
     TABLE_COUNT=$(mysql -h $DB_HOST -u $DB_USER -p$DB_USER_PASS -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$DB_NAME';" | tail -n 1)
     if [ "$TABLE_COUNT" -eq "0" ]; then
         echo "Importing initial Cacti data into the database..."
         if [ -f "cacti.sql" ]; then
+            # if not initialized, import the database
             sudo mysql -h $DB_HOST -u $DB_USER -p$DB_USER_PASS $DB_NAME < cacti.sql
         else
             echo "Error: cacti.sql not found in $Cacti_DIR. Cannot initialize database."

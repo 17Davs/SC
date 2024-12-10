@@ -1,26 +1,26 @@
 #!/bin/bash
 
+# This script installs and configures Nginx on the web server node.
+# Ensure GlusterFS is properly configured before running this script.
+
 set -e  # Exit script on any error
 
 echo "Installing and configuring Nginx on $(hostname)..."
 
 # Install Nginx
 sudo apt-get install -y nginx
-
 # Enable and start Nginx
 sudo systemctl enable nginx
 sudo systemctl start nginx
 
-# Configure the web root directory to use GlusterFS mount
+# Ensure /cluster/www exists
 if [ ! -d "/cluster/www" ]; then
     echo "Error: /cluster/www does not exist. Ensure GlusterFS is properly configured before running this script."
     exit 1
 fi
 
-# Set /cluster/www as the Nginx web root
+# Set /cluster/www as the Nginx web root (just for now)
 NGINX_CONF="/etc/nginx/sites-available/default"
-sudo cp $NGINX_CONF ${NGINX_CONF}.bak  # Backup the original configuration
-
 sudo tee $NGINX_CONF > /dev/null <<EOF
 server {
     listen 80;
@@ -34,23 +34,13 @@ server {
     }
 }
 EOF
-
 # Reload Nginx to apply the configuration
 sudo systemctl reload nginx
 
 # Create a sample index.html file in /cluster/www
 if [ ! -f "/cluster/www/index.html" ]; then
-    echo "Creating a sample index.html in /cluster/www..."
-    echo "<!DOCTYPE html>
-<html>
-<head>
-    <title>Welcome to Nginx on SC Cluster</title>
-</head>
-<body>
-    <h1>Welcome to SC Cluster!</h1>
-    <p>This is served from /cluster/www.</p>
-</body>
-</html>" | sudo tee /cluster/www/index.html > /dev/null
+    echo "Creating index.html in /cluster/www..."
+    sudo cp /vagrant/index.html /cluster/www/index.html
 fi
 
 # Ensure correct permissions

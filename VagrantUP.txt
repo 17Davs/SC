@@ -1,0 +1,4 @@
+Correct order to vagrant up machines:
+- vagrant up web2 web1
+- vagrant up haproxy2 haproxy1
+- vagrant up sql1 sql2

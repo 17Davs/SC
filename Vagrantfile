@@ -61,7 +61,6 @@ Vagrant.configure("2") do |config|
     end
 
     haproxy1.vm.provision "shell", inline: <<-SHELL
-      sudo hostnamectl set-hostname haproxy1
       chmod +x /vagrant/*.sh
       bash /vagrant/first.sh
       bash /vagrant/hosts.sh
@@ -139,7 +138,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "client" do |client|
     client.vm.box = "ubuntu/focal64"
-    client.vm.network "private_network", type: "static", ip: "192.168.51.10"
+    client.vm.network "private_network", type: "static", ip: "172.20.51.10"
     client.vm.hostname = "client"
     config.vm.synced_folder "setup_files/", "/vagrant"
 
